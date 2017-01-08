@@ -2,6 +2,13 @@
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
 
+typedef struct room_data
+{
+	texture_t *tex;
+	mesh_t *mesh;
+	transform_t *transform;
+} room_data_t;
+
 int main(int argc, char **argv)
 {
 	// Start the game engine
@@ -76,8 +83,72 @@ int main(int argc, char **argv)
 		corridor->localScale.m[1] = 0.8f;
 		corridor->localScale.m[2] = 0.8f;
 		
-		corridor->localPosition.m[0] = 90.f;
-		corridor->localPosition.m[2] = 1.7f;
+		corridor->localPosition.m[0] = 96.f;
+		corridor->localPosition.m[1] = 1.1f;
+		corridor->localPosition.m[2] = 0.2f;
+		
+		// Load the room 2
+		transform_t* room2 = transform_instantiate();
+		texture_t room2Texture;
+		mesh_t room2Mesh;
+		
+		resources_load_texture("/cd/data/Room2.raw", GL_LINEAR, &room2Texture);
+		resources_load_mesh("/cd/data/Room2.mesh", &room2Mesh);
+		room2Mesh.texture = &room2Texture;
+		
+		room2->localScale.m[0] = 0.5f;
+		room2->localScale.m[1] = 0.5f;
+		room2->localScale.m[2] = 0.5f;
+		
+		room2->localPosition.m[0] = 191.5f;
+		room2->localPosition.m[1] = 1.f;
+		room2->localPosition.m[2] = 1.f;
+		
+		room2->localRotation.m[1] = -90.f;
+		
+		// Load the turret
+		transform_t* turret = transform_instantiate();
+		transform_t* turretDock = transform_instantiate();
+		turret->parent = turretDock;
+		
+		texture_t turretTexture, turretDockTexture;
+		mesh_t turretMesh, turretDockMesh;
+		
+		resources_load_texture("/cd/data/Turret.raw", GL_LINEAR, &turretTexture);
+		resources_load_texture("/cd/data/TurretDock.raw", GL_LINEAR, &turretDockTexture);
+		
+		resources_load_mesh("/cd/data/Turret.mesh", &turretMesh);
+		resources_load_mesh("/cd/data/TurretDock.mesh", &turretDockMesh);
+		
+		turretMesh.texture = &turretTexture;
+		turretDockMesh.texture = &turretDockTexture;
+		
+		turret->localScale.m[0] = 1.f;
+		turret->localScale.m[1] = 1.f;
+		turret->localScale.m[2] = 1.f;
+		
+		turretDock->localScale.m[0] = 0.5f;
+		turretDock->localScale.m[1] = 0.5f;
+		turretDock->localScale.m[2] = 0.5f;
+		
+		turretDock->localPosition.m[0] = 191.5f;
+		turretDock->localPosition.m[1] = 0.f;
+		turretDock->localPosition.m[2] = 0.f;
+		
+		// Create the room list
+		room_data_t *roomList = calloc(32, sizeof(room_data_t));
+		
+		roomList[0].transform = room;
+		roomList[0].mesh = &roomMesh;
+		roomList[0].tex = &roomTexture;
+		
+		roomList[1].transform = corridor;
+		roomList[1].mesh = &corridorMesh;
+		roomList[1].tex = &corridorTexture;
+		
+		roomList[2].transform = room2;
+		roomList[2].mesh = &room2Mesh;
+		roomList[2].tex = &room2Texture;
 		
 		// Load the player
 		transform_t* player = transform_instantiate();
@@ -92,7 +163,7 @@ int main(int argc, char **argv)
 		player->localScale.m[1] = 0.08f;
 		player->localScale.m[2] = 0.08f;
 		
-		player->localPosition.m[1] = 2.5f;
+		player->localPosition.m[1] = 1.3f;
 		
 		// Load the bullet
 		texture_t bulletTexture;
@@ -133,24 +204,37 @@ int main(int argc, char **argv)
 		float cameraAngle = 0.f, cam_len = 1.f;
 		float cam_x = 30.f, cam_y = 30.f;
 		float pl_fwd_x = 0.f, pl_fwd_y = 1.f;
-		char dbgVram[128];
+		char dbgVram[128], dbg[128];
 		
 		float enemyDistance = 25.f;
 		
 		// Enemy list
 		transform_t **enemyList = calloc(64, sizeof(transform_t*));
 		enemyList[0] = block;
-		transform_t *enemyIterator = &enemyList[0];
+		enemyList[1] = turretDock;
+		transform_t *enemyIterator = enemyList[0];
 		int enemyCounter = 0;
+		
+		float turret_fwd_x = 1.f, turret_fwd_y = 0.f;
 		
 		while (!engine_doFrame())
 		{
 			// Draw scene
-			renderer_drawMesh(room, &roomMesh, &engine.scene);
-			renderer_drawMesh(corridor, &corridorMesh, &engine.scene);
+			for (i = 0; i < 32; ++i)
+			{
+				if (roomList[i].transform != NULL)
+				{
+					renderer_drawMesh(roomList[i].transform, roomList[i].mesh, &engine.scene);
+				}
+			}
+			
 			renderer_drawMesh(player, &playerMesh, &engine.scene);
 			renderer_drawMesh(block, &blockMesh, &engine.scene);
 			
+			renderer_drawMesh(turret, &turretMesh, &engine.scene);
+			renderer_drawMesh(turretDock, &turretDockMesh, &engine.scene);
+			
+			// Draw bullet pool
 			for (i = 0; i < 32; ++i)
 			{
 				if (bulletsInUse[i])
@@ -222,12 +306,12 @@ int main(int argc, char **argv)
 				// Search for enemies. If there is a close enemy, point towards it
 				while (enemyCounter < 64)
 				{
-					enemyIterator = &enemyList[enemyCounter];
+					enemyIterator = enemyList[enemyCounter];
 					
 					if (enemyIterator != NULL)
 					{
-						pl_fwd_x = player->localPosition.m[0] - block->localPosition.m[0];
-						pl_fwd_y = player->localPosition.m[2] - block->localPosition.m[2];
+						pl_fwd_x = player->localPosition.m[0] - enemyIterator->localPosition.m[0];
+						pl_fwd_y = player->localPosition.m[2] - enemyIterator->localPosition.m[2];
 						
 						float pl_fwd_len = fsqrt(abs(fipr_magnitude_sqr(pl_fwd_x, pl_fwd_y, 0.f, 0.f)));
 						
@@ -253,6 +337,20 @@ int main(int argc, char **argv)
 				
 				playerRot = atan2(pl_fwd_x, pl_fwd_y) * 180.f / M_PI;
 				player->localRotation.m[1] = playerRot;
+				
+				// Make the turret follow the player
+				turret_fwd_x = player->localPosition.m[0] - turretDock->localPosition.m[0];
+				turret_fwd_y = player->localPosition.m[2] - turretDock->localPosition.m[2];
+				
+				float turret_fwd_len = fsqrt(abs(fipr_magnitude_sqr(turret_fwd_x, turret_fwd_y, 0.f, 0.f)));
+				
+				if (turret_fwd_len != 0.f)
+				{
+					turret_fwd_x /= turret_fwd_len;
+					turret_fwd_y /= turret_fwd_len;
+				}
+				
+				turret->localRotation.m[1] = (atan2(turret_fwd_x, turret_fwd_y) * 180.f / M_PI) + 90.f;
 				
 				// If the A button is pressed, shoot
 				if (state->buttons & CONT_A)
