@@ -26,21 +26,21 @@ management and asset loading. It's developed in the C programming language
 and uses the KallistiOS 2.0 library with kosgl to render.
 It contains the following submodules:
 
---+ Scene: Rudimentary scene graph handling, includes transform definition
++ Scene: Rudimentary scene graph handling, includes transform definition
 and very simple parenting mechanisms.
 
---+ Renderer: Used to render the 3D scene. Handles rendering meshes and
++ Renderer: Used to render the 3D scene. Handles rendering meshes and
 setting the camera depending on the scene information.
 
---+ Resources: Handles the loading of assets from the CD-ROM. Supports the
++ Resources: Handles the loading of assets from the CD-ROM. Supports the
 load of uncompressed textures, static meshes and bitmap fonts. All the files
 must be in the engine's internal format, which is specified below.
 
---+ Debug: Simple shortcut to output debug information through the serial
++ Debug: Simple shortcut to output debug information through the serial
 cable if you're running dc-load or if, like poor people like us, are using
 nullDC to debug the game.
 
---+ GUI: Handles the rendering of user interface elements. Supports rendering 
++ GUI: Handles the rendering of user interface elements. Supports rendering 
 colored and translucent rectangles, textures and bitmap fonts. The font 
 rendering is very simple and assumes all fonts to be monospaced.
 
@@ -51,14 +51,17 @@ too much time to code an actual game, so it isn't that much interesting.
 + *Resource converter:* The tool used to convert assets from the editable formats
 used on asset creation (PNG, BMP, OBJ, Blend, DAE, etc) to the engine's custom
 formats. The asset converter handles:
---+ Static meshes: converts OBJ, DAE, STL, 3DS or BLEND files to the engine internal
+
++ Static meshes: converts OBJ, DAE, STL, 3DS or BLEND files to the engine internal
 mesh file. The input mesh is triangulated and then the triangle vertices, indices,
 UV coordinates and normal vectors are saved into the output file. Only the first UV
 channel is taken into account. The file must have a single mesh, multi-mesh export
 is not supported.
---+ Textures: convets PNG, BMP, TIFF into the engine internal texture format. The textures
+
++ Textures: convets PNG, BMP, TIFF into the engine internal texture format. The textures
 are saved in RGB888 uncompressed format.
---+ Fonts: converts a FNT file compiled with the BMFont Tool to the engine internal
+
++ Fonts: converts a FNT file compiled with the BMFont Tool to the engine internal
 font specification format. When loading a font on the engine, the resulting BINFNT
 file must be loaded along the font's texture atlas.
 
