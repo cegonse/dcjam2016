@@ -93,7 +93,8 @@ converted file will be saved. Only run one at a time, multiple file conversion i
 
 The demo and all its source code and asset files are licensed under the GNU General Public License V3. 
 This means you're free to copy, distribute, sell, promote and modify the elements of this project 
-as long as the license is respected.
+as long as the license is respected. If you're not familiar with the license, please read the
+LICENSE file before!
 
 If you're interested on doing some Dreamcast development and want to work over this project, 
 please get in touch with us. We'll be happy to hear what you're going to do and collaborate!
